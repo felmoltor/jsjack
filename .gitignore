@@ -1,0 +1,11 @@
+*/__pycache__/*
+*.log
+*.pyc
+subdomain_takeover/input/*
+subdomain_takeover/output/*
+subdomain_takeover/majestic/*
+subdomain_takeover/bounty-targets-data/*
+prod-*
+*.json
+.env
+*.zip
