@@ -26,6 +26,13 @@ echo 'DISCORD_WEBHOOK=https://discord.com/api/webhooks/<id>' >> spiders/.env
 docker run -v $PWD/input/:/app/input/ -v $PWD/output/:/app/output/ -v $PWD/.env:/app/spiders/.env -it --rm  jsjack -u input/targets.txt
 ```
 
+I've also published the image in the GitHub registry, so instead of cloning the repository:
+```bash
+docker pull ghcr.io/felmoltor/jsjack/jsjack:latest 
+docker image tag ghcr.io/felmoltor/jsjack/jsjack:latest jsjack
+docker run -v $PWD/input/:/app/input/ -v $PWD/output/:/app/output/ -it --rm  jsjack -u input/targets-urls.txt
+```
+
 ## Output
 The tool will export the scrapped items in the folder output in JSON format. The following files would appear here:
 * **hijackable_domains.txt**: global list of orphan or hijackable domains where we have already found some scripts to be hosted.
