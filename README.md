@@ -16,14 +16,14 @@ Clone the project and provide the arguments
 git clone https://github.com/felmoltor/jsjack
 docker build -t jsjack:latest .
 docker run -v $PWD/input/:/app/input/ -it --rm  jsjack  -h
-docker run -v $PWD/input/:/app/input/ -it --rm  jsjack -u input/targets.txt --discord-webhook 'https://discord.com/api/webhooks/<id> --scrapeops-key <key>
+docker run -v $PWD/input/:/app/input/ -v $PWD/output/:/app/output/ -it --rm  jsjack -u input/targets.txt --discord-webhook 'https://discord.com/api/webhooks/<id> --scrapeops-key <key>
 ```
 
 Alternatively, you can add to a .env file the variables DISCORD_WEBHOOK and SCRAPEOPS_KEY in the folder 'spiders' instead of providing it via arguments:
 ```bash
 echo 'SCRAPEOPS_KEY=yourkey' >> spiders/.env
 echo 'DISCORD_WEBHOOK=https://discord.com/api/webhooks/<id>' >> spiders/.env
-docker run -v $PWD/input/:/app/input/ -v $PWD/.env:/app/spiders/.env -it --rm  jsjack -u input/targets.txt
+docker run -v $PWD/input/:/app/input/ -v $PWD/output/:/app/output/ -v $PWD/.env:/app/spiders/.env -it --rm  jsjack -u input/targets.txt
 ```
 
 ## Output

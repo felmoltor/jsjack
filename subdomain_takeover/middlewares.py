@@ -49,7 +49,7 @@ class BlockBinaryFilesMiddleware:
             ".exe", ".msi", ".apk", ".bat", ".cmd", ".gadget", ".jar", ".pif",
             ".pyc", ".pyo", ".sh", ".vb", ".vbs", ".wsf", ".run", ".bin", ".cgi",
             ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".lz", ".lzma", ".z", ".iso",
-            ".dmg", ".vmdk", ".vdi", ".img", ".cue",
+            ".dmg", ".vmdk", ".vdi", ".img", ".cue", "pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
             ".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma",
             ".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpeg", ".mpg", ".3gp",
             ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svgz",
