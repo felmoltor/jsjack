@@ -35,7 +35,7 @@ DISCORD_WEBHOOK=os.getenv('DISCORD_WEBHOOK')
 #     "https": "https://127.0.0.1:8080"
 # }
 
-DNS_SERVER="192.168.69.61"
+DNS_SERVER="8.8.8.8"
 DNS_TIMEOUT=15
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
