@@ -60,4 +60,3 @@ class BlockBinaryFilesMiddleware:
             spider.logger.warning(f"Blocked download. Request is a binary file: {request.url}")
             raise IgnoreRequest("Blocked download. It is binary file: {request.url}")
         return None
-    

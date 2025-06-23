@@ -1,3 +1,4 @@
+from functools import lru_cache
 import whoisit
 import whois
 
@@ -5,6 +6,7 @@ class WhoisRDAP:
     def __init__(self):
         whoisit.bootstrap()
 
+    @lru_cache(maxsize=128)
     def fetch_whois_data(self, domain: str):
         try:
             return whoisit.domain(domain)
@@ -18,6 +20,7 @@ class WhoisRDAP:
         return False
     
 class WhoisClassic:
+    @lru_cache(maxsize=128)
     def fetch_whois_data(self, domain: str):
         try:
             return whois.whois(domain)

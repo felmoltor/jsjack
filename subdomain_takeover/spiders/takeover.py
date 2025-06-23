@@ -48,14 +48,6 @@ class TakeoverSpider(Spider):
         self.dns_server = dns or settings.get('DNS_SERVER', '8.8.8.8')
         self.logging_level = logging_level or settings.get('LOG_LEVEL', 'INFO')
 
-        # self.logger.info("Initializing TakeoverSpider with the following settings:")
-        # self.logger.info(f"Discord Webhook: {self.discord_webhook}")
-        # self.logger.info(f"ScrapeOps Key: {self.scrapeops_key}")
-        # self.logger.info(f"Max Pages per FLD: {self.max_pages_per_fld}")
-        # self.logger.info(f"Max Items per FLD: {self.max_items_per_fld}")
-        # self.logger.info(f"Depth Limit: {self.depth_limit}")
-        # self.logger.info(f"DNS Server: {self.dns_server}")
-
         # Initialize counters
         self.pages_counter = Counter()
         self.items_counter = Counter()
@@ -127,7 +119,6 @@ class TakeoverSpider(Spider):
             with open(self.hijackable_fdl_file, "w") as f:
                 f.write("")
 
-
     def _populate_allowed_domains(self):
         """
         Populate the allowed domains set from the settings.
@@ -135,12 +126,17 @@ class TakeoverSpider(Spider):
         """
         # Decide whether to allow first domain level allowlist
         for url in self.start_urls:
-            self.allowed_domains.append(urlparse(url).netloc)
+            try:
+                urlp=urlparse(url)
+                self.allowed_domains.append(urlp.netloc)
 
-            # Add also the first level domain if allow_fld is True
-            if (self.allow_fld):
-                fld=get_fld(url)
-                self.allowed_domains.append(fld)
+                # Add also the first level domain if allow_fld is True
+                if (self.allow_fld):
+                    fld=get_fld(url)
+                    self.allowed_domains.append(fld)
+            except Exception as e:
+                self.logger.error(f"Error parsing URL '{url}': {e}")
+                continue
         # Manually add also the scrapeops proxy domain if it is used
         if (self.use_scrapeops):
             self.allowed_domains.append("proxy.scrapeops.io")

@@ -1,3 +1,4 @@
+from functools import lru_cache
 import logging
 import requests
 from tldextract import extract as tld_extract
@@ -36,6 +37,25 @@ class DomainHijacker:
         self.whois_rdap = WhoisRDAP()
         self.whois_classic = WhoisClassic()
 
+    @lru_cache(maxsize=512)
+    def _query_dns(self, fld: str) -> DNSRecord:
+        """
+        Query the DNS server for the given first-level domain (fld).
+        The function uses an LRU CACHE to cache the results of the DNS queries.
+        :param fld: The first-level domain to query (e.g. "example.com").
+        :return: A DNSRecord object containing the DNS response.
+        """
+        query=DNSRecord.question(fld)
+        dns_response = DNSRecord.parse(
+            query.send(
+                self.dns_server,
+                53, 
+                False,
+                timeout=self.dns_timeout
+            )
+        )
+        return dns_response
+
     def detect_cnames_hijack(
             self, 
             parent_response_url,
@@ -54,16 +74,8 @@ class DomainHijacker:
         parent_domain_name=urlparse(parent_response_url).netloc
         link_domain_name=urlparse(link_url).netloc
 
-        # Send the DNS query to see if the link_domain_name has a CNAME record
-        query=DNSRecord.question(link_domain_name)
-        dns_response = DNSRecord.parse(
-            query.send(
-                self.dns_server,
-                53, 
-                False,
-                timeout=self.dns_timeout
-            )
-        )
+        # Query the DNS server for the link domain name
+        dns_response = self._query_dns(link_domain_name)
         
         # Create an array of CNAME records returned by the DNS query
         jsitems = list()
@@ -76,15 +88,7 @@ class DomainHijacker:
                 self.logger.debug("The parent domain %s contains a link to domain %s. This link domain has a CNAME entry pointing to %s (subdomain of %s))" % (parent_domain_name,link_domain_name,pointer,fld_pointer))
                 
                 # Check if the first level domain is registered
-                query_cname=DNSRecord.question(fld_pointer)
-                cname_response=DNSRecord.parse(
-                    query_cname.send(
-                        self.dns_server,
-                        53,
-                        False,
-                        timeout=self.dns_timeout
-                    )
-                )
+                cname_response = self._query_dns(fld_pointer)
                 
                 jsitem=JsLink()
                 jsitem['hijackable_domain']="%s (%s)" % (link_domain_name, pointer)
@@ -148,6 +152,30 @@ class DomainHijacker:
                         self.discord.notify_takeover("CNAME Domain Hijack Detected (helpscoutdocs)!",jslink=jsitem)
                     else:
                         self.logger.debug("The pointer %s is hoste in an helpscoutdocs bucket, but it is currently taken")
+                elif ("github.io" in pointer.lower()):
+                    gh_response=requests.get(pointer,headers=self.headers,verify=False)
+                    if (gh_response.text == "There isn't a GitHub Pages site here" and gh_response.status_code == 404):
+                        # Check if the username is taken in github:
+                        gh_username = pointer.split(".")[0].split("//")[-1]
+                        gh_user_response = requests.get(f"https://api.github.com/users/{gh_username}", headers=self.headers, verify=False)
+                        if gh_user_response.status_code == 404:
+                            jsitem['hijackable']=True
+                            jsitem["cname_hijackable"]=True
+                            self.logger.warning("Parent domain %s includes a remote source from %s. This source points to the github %s, which is not registered. You can takeover the parent domain!" % (parent_domain_name, link_domain_name, pointer))
+                            self.discord.notify_takeover("CNAME Domain Hijack Detected (github)!",jslink=jsitem)
+                        else:
+                            self.logger.debug("The pointer %s is hosted in an GitHub page, but the username it is currently taken")
+                    else:
+                        self.logger.debug("The pointer %s is hosted in an GitHub page and exists")
+                elif ("gitbook.io" in pointer.lower()):
+                    ghb_response=requests.get(pointer,headers=self.headers,verify=False)
+                    if ghb_response.status_code == 404:
+                        jsitem['hijackable']=True
+                        jsitem["cname_hijackable"]=True
+                        self.logger.warning("Parent domain %s includes a remote source from %s. This source points to the github %s, which is not registered. You can takeover the parent domain!" % (parent_domain_name, link_domain_name, pointer))
+                        self.discord.notify_takeover("CNAME Domain Hijack Detected (GitBook)!",jslink=jsitem)
+                    else:
+                        self.logger.debug("The pointer %s is hosted in an GitBook page and exists")
                 else:
                     self.logger.debug(f"CNAME Hijack was not detected for parent domain {parent_domain_name}")
 
@@ -204,16 +232,11 @@ class DomainHijacker:
             jsitem["cname_hijackable"]=False
             jsitem["type"]=link_type
             
-            self.logger.debug("Querying first level domain %s to server %s" % (fld,self.settings.get("DNS_SERVER")))
-            query=DNSRecord.question(fld)
-            dns_response = DNSRecord.parse(
-                query.send(
-                    self.dns_server, 
-                    53, 
-                    False, 
-                    timeout=self.dns_timeout
-                )
-            )
+            self.logger.debug("Querying first level domain %s to server %s" % (fld,self.dns_server))
+            
+            # Query the DNS server for the link domain name
+            dns_response = self._query_dns(fld)
+
             if RCODE[dns_response.header.rcode] == 'NXDOMAIN':
                 # Now, check if the domain is not registered using RDAP
                 if not self.whois_rdap.is_registered(fld):

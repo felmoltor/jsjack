@@ -76,6 +76,16 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 5
 CONCURRENT_REQUESTS_PER_IP = 5
 REDIRECT_MAX_TIMES = 7
 
+# HTTP Cache Middleware settings
+HTTPCACHE_ENABLED = True
+HTTPCACHE_DIR = '.scrapy/httpcache'
+HTTPCACHE_EXPIRATION_SECS = 3600 # 1 hour
+
+# My own class to handle prunable cache
+HTTPCACHE_STORAGE = 'subdomain_takeover.spiders.PrunableFilesystemCacheStorage'
+HTTPCACHE_MAX_FILES = 1024
+HTTPCACHE_MAX_SIZE = 50 * 1024 * 1024  # 50 MB
+
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
 
