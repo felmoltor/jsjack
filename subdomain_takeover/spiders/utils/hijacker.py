@@ -18,12 +18,19 @@ class DomainHijacker:
     """
     def __init__(
             self, 
-            settings,
+            settings=None,  # Keep for backwards compatibility
+            dns_server: str = None,
+            dns_timeout: int = None,
+            headers: dict = None,
             discord: TakeoverDiscordBot=None,
             logger: logging.Logger=None,
             explored_domains: set=None
         ):
-        self.settings = settings
+        # Get settings from the provided settings or use defaults
+        self.dns_server = dns_server or settings.get("DNS_SERVER", "8.8.8.8")
+        self.dns_timeout = dns_timeout or settings.get("DNS_TIMEOUT", 5)
+        self.headers = headers or settings.get("HEADERS", {})
+
         self.discord = discord
         self.logger = logger or logging.getLogger('domain-hijacker')
         self.whois_rdap = WhoisRDAP()
@@ -51,10 +58,10 @@ class DomainHijacker:
         query=DNSRecord.question(link_domain_name)
         dns_response = DNSRecord.parse(
             query.send(
-                self.settings.get("DNS_SERVER"), 
+                self.dns_server,
                 53, 
                 False,
-                timeout=self.settings.get("DNS_TIMEOUT")
+                timeout=self.dns_timeout
             )
         )
         
@@ -72,10 +79,10 @@ class DomainHijacker:
                 query_cname=DNSRecord.question(fld_pointer)
                 cname_response=DNSRecord.parse(
                     query_cname.send(
-                        self.settings.get("DNS_SERVER"),
+                        self.dns_server,
                         53,
                         False,
-                        timeout=self.settings.get("DNS_TIMEOUT")
+                        timeout=self.dns_timeout
                     )
                 )
                 
@@ -97,7 +104,7 @@ class DomainHijacker:
                     self.discord.notify_takeover("CNAME Domain Hijack Detected (direct)!",jslink=jsitem)
                 elif ("s3.amazonaws.com" in pointer.lower()):
                     # Check the S3 bucket exists. If not, we can create it ourselves
-                    s3_response=requests.get(pointer,headers=self.settings.get("HEADERS"),verify=False)
+                    s3_response=requests.get(pointer,headers=self.headers,verify=False)
                     if (s3_response.status_code == 404 and "NoSuchBucket" in s3_response.text):
                         jsitem['hijackable']=True
                         jsitem["cname_hijackable"]=True
@@ -106,7 +113,7 @@ class DomainHijacker:
                     else:
                         self.logger.debug("The pointer %s is hoste in an S3 bucket, but it is currently taken")
                 elif ("bitbucket.io" in pointer.lower()):
-                    bb_response=requests.get(pointer,headers=self.settings.get("HEADERS"),verify=False)
+                    bb_response=requests.get(pointer,headers=self.headers,verify=False)
                     if (bb_response.text == "Repository not found" and bb_response.status_code == 404):
                         jsitem['hijackable']=True
                         jsitem["cname_hijackable"]=True
@@ -115,7 +122,7 @@ class DomainHijacker:
                     else:
                         self.logger.debug("The pointer %s is hoste in an bitbucket, but it is currently taken")
                 elif ("hatenablog.com" in pointer.lower()):
-                    hatena_response=requests.get(pointer,headers=self.settings.get("HEADERS"),verify=False)
+                    hatena_response=requests.get(pointer,headers=self.headers,verify=False)
                     if (hatena_response.text == "Blog is not found" and hatena_response.status_code == 404):
                         jsitem['hijackable']=True
                         jsitem["cname_hijackable"]=True
@@ -124,7 +131,7 @@ class DomainHijacker:
                     else:
                         self.logger.debug("The pointer %s is hoste in an hatenablog, but it is currently taken")
                 elif ("helpjuice.com" in pointer.lower()):
-                    hj_response=requests.get(pointer,headers=self.settings.get("HEADERS"),verify=False)
+                    hj_response=requests.get(pointer,headers=self.headers,verify=False)
                     if (hj_response.text == "We could not find what you're looking for" and hj_response.status_code == 404):
                         jsitem['hijackable']=True
                         jsitem["cname_hijackable"]=True
@@ -133,7 +140,7 @@ class DomainHijacker:
                     else:
                         self.logger.debug("The pointer %s is hoste in an helpjuice bucket, but it is currently taken")
                 elif ("helpscoutdocs.com" in pointer.lower()):
-                    hs_response=requests.get(pointer,headers=self.settings.get("HEADERS"),verify=False)
+                    hs_response=requests.get(pointer,headers=self.headers,verify=False)
                     if (hs_response.text == "No settings were found for this company" and hs_response.status_code == 404):
                         jsitem['hijackable']=True
                         jsitem["cname_hijackable"]=True
@@ -201,10 +208,10 @@ class DomainHijacker:
             query=DNSRecord.question(fld)
             dns_response = DNSRecord.parse(
                 query.send(
-                    self.settings.get("DNS_SERVER"), 
+                    self.dns_server, 
                     53, 
                     False, 
-                    timeout=self.settings.get("DNS_TIMEOUT")
+                    timeout=self.dns_timeout
                 )
             )
             if RCODE[dns_response.header.rcode] == 'NXDOMAIN':
@@ -228,4 +235,3 @@ class DomainHijacker:
         #     self.logger.debug("Source link %s is not a valid domain or is the same as the response URL %s" % (source_attr, response.url))
 
         return jsitem
-    

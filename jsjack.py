@@ -7,7 +7,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 from  subdomain_takeover.spiders.takeover import TakeoverSpider  
 
-def get_logging_level(level_str: str) -> int:
+def get_logging_level(level_str: str="DEBUG") -> int:
     return {
         'DEBUG': logging.DEBUG,
         'INFO': logging.INFO,
@@ -24,7 +24,8 @@ def main():
     parser.add_argument('-A', '--allow-fld', action='store_true')
     parser.add_argument('-S', '--scrapeops-key')
     parser.add_argument('-D', '--discord-webhook')
-    parser.add_argument('-L', '--logging-level', choices=['DEBUG','INFO','WARN','ERROR','CRITICAL'])
+    parser.add_argument('-L', '--logging-level', choices=['DEBUG','INFO','WARN','ERROR','CRITICAL'], default='DEBUG',
+                        help='Set the logging level (default: DEBUG)')
     parser.add_argument('-E', '--max-depth')
     parser.add_argument('-I', '--max-items')
     parser.add_argument('-P', '--max-pages')
@@ -39,24 +40,27 @@ def main():
     if args.discord_webhook:
         settings.set('DISCORD_WEBHOOK', args.discord_webhook)
     if args.max_depth:
-        settings.set('DEPTH_LIMIT', int(args.max_depth))
+        settings.set('DEPTH_LIMIT', args.max_depth)
     if args.max_pages:
-        settings.set('MAX_PAGES_PER_FLD', int(args.max_pages))
+        settings.set('MAX_PAGES_PER_FLD', args.max_pages)
     if args.max_items:
-        settings.set('MAX_ITEMS_PER_FLD', int(args.max_items))
+        settings.set('MAX_ITEMS_PER_FLD', args.max_items)
     if args.dns:
         settings.set('DNS_SERVER', args.dns)
 
     process = CrawlerProcess(settings)
+    process.crawl(TakeoverSpider,
+        urls=args.urls,
+        allow_fld=args.allow_fld,
+        discord_webhook=args.discord_webhook,
+        scrapeops_key=args.scrapeops_key,
+        max_pages=args.max_pages,
+        max_items=args.max_items,
+        max_depth=args.max_depth,
+        dns=args.dns,
+        logging_level=get_logging_level(args.logging_level)
+    )
 
-
-    spider_kwargs = {
-        'urls': args.urls,
-    }
-    if args.allow_fld:
-        spider_kwargs['allow_fld'] = True
-
-    process.crawl(TakeoverSpider, **spider_kwargs)
     process.start()
 
 if __name__ == '__main__':

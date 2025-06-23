@@ -13,6 +13,9 @@ class LinkType(Enum):
     FRAME=auto()
     DIRECT=auto()
     JAVASCRIPT=auto()
+    STYLE=auto()
+    IMAGE=auto()
+    SVG=auto()
 
 class JsLink(Item):
     hijackable = Field()        # Boolean indicating if the domain is hijackable (e.g. True)
