@@ -3,11 +3,32 @@ JSJack
 
 # What is JSJack
 JSJack is a tool that explores a list of web pages and retrieves all links to JavaScript files externally hosted.
-It search for files hosted within the `script`, `frame`, and `iframe` tags. For each of those, it check wether the domain where the script is hosted is registered by doing a DNS query and a RDAP query. If the domain is not registered, it shows an alert in the console, and optionally sends an alert to a Discord webhook.
+It search for files hosted within the `script`, `frame`, `iframe`, `img`, `svg`, and `link` tags. For each of those, it check wether the domain where the script is hosted is registered by doing a DNS query and a RDAP query. If the domain is not registered, it shows an alert in the console, and optionally sends an alert to a Discord webhook.
 
 You can provide a [Scrape Ops](https://scrapeops.io/) key to use the platform during the crawling.
 
 You can also provide a [Discord webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) to receive the notifications when an orphan JavaScript file has been detected.
+
+# Workflow
+
+![Workflow](img/architecture.drawio.png)
+
+The tool just receives a file with a list of URLs you want to analyse. It will craw all these websites using Scrapy and analyse each page crawled to search for the following DOM elements:
+
+```html
+<script src="third party domain">
+<frame src="third party domain">
+<iframe src="third party domain">
+<image src="third party domain">
+<link src="third party domain">
+<svg><a href="third party domain">
+```
+
+For each one of these elements it will pull the "src" or "href" attribute of these nodes and check whethere these are pointing to a third party domain. Thereafter, JsJack will do the following checks on the domains of these elements:
+
+1. DNS query. If the DNS return NXDOMAIN. Go to step 2.
+2. Whois with RDAP protocol. If the domain is not found (RDAP returns a 404 response), go to step 3.
+3. Whois. If the domain is not found. We found an orphan script!
 
 # Installation
 ## Docker

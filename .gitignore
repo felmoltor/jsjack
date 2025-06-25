@@ -10,3 +10,4 @@ prod-*
 .env
 *.zip
 .scrapy/
+*.drawio
