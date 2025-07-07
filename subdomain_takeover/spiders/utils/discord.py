@@ -18,8 +18,8 @@ class TakeoverDiscordBot:
         :param msg_title: Title of the message to be sent.
         :param jslink: The JavaScript item containing details about the domain takeover.
         """
-        if self.settings.get("DISCORD_WEBHOOK") is None:
-            self.logger.warning("Discord webhook URL is not set in settings. Skipping notification.")
+        if self.webhook_url is None:
+            self.logger.warning("Discord webhook URL is not set. Skipping notification.")
         else:
             now = datetime.now()
             date=now.strftime("%d-%m-%Y")
@@ -60,9 +60,9 @@ class TakeoverDiscordBot:
                 }
             ]
             if (self.use_proxies):
-                requests.post(url=self.settings.get("DISCORD_WEBHOOK"),json=dict(data),proxies=self.settings.get("PROXIES"),verify=False)
+                requests.post(url=self.webhook_url,json=dict(data),proxies=self.settings.get("PROXIES"),verify=False)
             else:
-                requests.post(url=self.settings.get("DISCORD_WEBHOOK"),json=dict(data))
+                requests.post(url=self.webhook_url,json=dict(data))
 
     def notify_status(
             self,
@@ -76,7 +76,7 @@ class TakeoverDiscordBot:
         Notify about the status of the crawler via Discord.
         :param status: status message to be sent in the title of the Discord message.
         """
-        if self.settings.get("DISCORD_WEBHOOK") is None:
+        if self.webhook_url is None:
             self.logger.warning("Discord webhook URL is not set in settings. Skipping notification.")
         else:
             now = datetime.now()
@@ -115,6 +115,6 @@ class TakeoverDiscordBot:
                 }
             ]
             if (self.use_proxies):
-                requests.post(url=self.settings.get("DISCORD_WEBHOOK"),json=dict(data),proxies=self.settings.get("PROXIES"),verify=False)
+                requests.post(url=self.webhook_url,json=dict(data),proxies=self.settings.get("PROXIES"),verify=False)
             else:
-                requests.post(url=self.settings.get("DISCORD_WEBHOOK"),json=dict(data))
+                requests.post(url=self.webhook_url,json=dict(data))
