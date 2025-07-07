@@ -19,6 +19,8 @@ def get_logging_level(level_str: str="DEBUG") -> int:
 
 def main():
     parser = argparse.ArgumentParser(description="Run Scrapy takeover spider with options.")
+    cog = parser.add_argument_group('Crawling Intensity',
+        'Options to control the crawling intensity, such as maximum depth, items per field, and pages per field.')
     parser.add_argument('-u', '--urls', required=True)
     parser.add_argument('-d', '--dns')
     parser.add_argument('-A', '--allow-fld', action='store_true')
@@ -26,9 +28,11 @@ def main():
     parser.add_argument('-D', '--discord-webhook')
     parser.add_argument('-L', '--logging-level', choices=['DEBUG','INFO','WARN','ERROR','CRITICAL'], default='DEBUG',
                         help='Set the logging level (default: DEBUG)')
-    parser.add_argument('-E', '--max-depth')
-    parser.add_argument('-I', '--max-items')
-    parser.add_argument('-P', '--max-pages')
+    parser.add_argument('-i', '--scan-images', action='store_true',
+                        help='Enable scanning of image items to detect if they are hosted in an orphan domain')
+    cog.add_argument('-E', '--max-depth')
+    cog.add_argument('-I', '--max-items')
+    cog.add_argument('-P', '--max-pages')
     args = parser.parse_args()
 
     # Get and modify Scrapy settings
@@ -58,6 +62,7 @@ def main():
         max_items=args.max_items,
         max_depth=args.max_depth,
         dns=args.dns,
+        scan_images=args.scan_images,
         logging_level=get_logging_level(args.logging_level)
     )
 

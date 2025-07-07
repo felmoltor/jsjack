@@ -31,6 +31,7 @@ class TakeoverSpider(Spider):
             max_items: int=None,
             max_depth: int=None,
             dns: str=None,
+            scan_images: bool=False,
             logging_level: str=None,
             **kwargs
         ):
@@ -46,6 +47,7 @@ class TakeoverSpider(Spider):
         self.max_items_per_fld = int(max_items) if max_items else settings.getint('MAX_ITEMS_PER_FLD', 100)
         self.depth_limit = int(max_depth) if max_depth else settings.getint('DEPTH_LIMIT', 2)
         self.dns_server = dns or settings.get('DNS_SERVER', '8.8.8.8')
+        self.scan_images = scan_images or settings.get('SCAN_IMAGES', False)
         self.logging_level = logging_level or settings.get('LOG_LEVEL', 'INFO')
 
         # Initialize counters
@@ -267,17 +269,19 @@ class TakeoverSpider(Spider):
         remote_scripts=response.xpath("//script[@src]")
         remote_iframes=response.xpath("//iframe[@src]")
         remote_frames=response.xpath("//frame[@src]")
-        remote_style_link=response.xpath("//link[@src]")
-        remote_images=response.xpath("//img[@src]")
-        remote_svg=response.xpath("//svg//a[@href]")
         items=[]
 
         items+=_populate_items_from_xpath(remote_scripts, LinkType.JAVASCRIPT, attrib_name="src")
         items+=_populate_items_from_xpath(remote_iframes, LinkType.IFRAME, attrib_name="src")
         items+=_populate_items_from_xpath(remote_frames, LinkType.FRAME, attrib_name="src")
-        items+=_populate_items_from_xpath(remote_style_link, LinkType.STYLE, attrib_name="src")
-        items+=_populate_items_from_xpath(remote_images, LinkType.IMAGE, attrib_name="src")
-        items+=_populate_items_from_xpath(remote_svg, LinkType.SVG, attrib_name="href")
+        
+        if self.scan_images:
+            remote_style_link=response.xpath("//link[@src]")
+            remote_images=response.xpath("//img[@src]")
+            remote_svg=response.xpath("//svg//a[@href]")
+            items+=_populate_items_from_xpath(remote_style_link, LinkType.STYLE, attrib_name="src")
+            items+=_populate_items_from_xpath(remote_images, LinkType.IMAGE, attrib_name="src")
+            items+=_populate_items_from_xpath(remote_svg, LinkType.SVG, attrib_name="href")
 
         return items
     
